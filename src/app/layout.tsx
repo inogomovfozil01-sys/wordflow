@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { Navbar } from '@/components/navbar';
-import { Footer } from '@/components/footer';
+import { AppShell } from '@/components/shell/app-shell';
 import { ToastProvider } from '@/components/ui/toast';
 import { getCurrentSession } from '@/lib/auth';
 import prisma from '@/lib/db';
@@ -60,11 +59,11 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className="h-full">
-      <body className={`${inter.className} min-h-full flex flex-col bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased`}>
+      <body className={`${inter.className} min-h-full flex flex-col antialiased`}>
         <ToastProvider>
-          <Navbar user={session} streak={streak} />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <AppShell user={session} streak={streak}>
+            {children}
+          </AppShell>
         </ToastProvider>
       </body>
     </html>

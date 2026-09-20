@@ -47,46 +47,46 @@ export default async function DictionaryPage({ searchParams }: DictionaryPagePro
   ]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-8 bg-[var(--bg-app)]">
       {/* Header */}
-      <div className="space-y-3">
-        <div className="flex items-center space-x-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
-          <Layers size={16} />
+      <div className="space-y-2">
+        <div className="flex items-center space-x-2 text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+          <Layers size={14} />
           <span>Curated Lexicon</span>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
           English Vocabulary Dictionary
         </h1>
-        <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base max-w-2xl">
+        <p className="text-xs sm:text-sm text-slate-500 max-w-2xl leading-relaxed">
           Search thousands of verified words with native IPA phonetics, Russian & Uzbek translations, contextual examples, and Gemini AI breakdowns.
         </p>
       </div>
 
       {/* Search & Filter Form */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-6">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 shadow-xs border border-slate-200/90 dark:border-slate-800 space-y-5">
         {/* Search Bar */}
         <form method="GET" action="/dictionary" className="relative flex items-center">
-          <Search size={20} className="absolute left-4 text-slate-400" />
+          <Search size={18} className="absolute left-4 text-slate-400" />
           <input
             type="text"
             name="q"
             defaultValue={query}
-            placeholder="Search English word, translation, or definition (e.g. algorithm, путешествие, bardoshli)..."
-            className="w-full pl-12 pr-28 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 transition-all"
+            placeholder="Search English word, translation, or definition (e.g. algorithm, сотрудничать, bardoshli)..."
+            className="w-full pl-11 pr-24 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder-slate-400 text-xs focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white dark:focus:bg-slate-900 transition-all"
           />
           {level !== 'ALL' && <input type="hidden" name="level" value={level} />}
           {topic !== 'ALL' && <input type="hidden" name="topic" value={topic} />}
           {pos !== 'ALL' && <input type="hidden" name="pos" value={pos} />}
-          <Button type="submit" size="sm" variant="primary" className="absolute right-2.5">
+          <Button type="submit" size="sm" variant="primary" className="absolute right-2 text-xs">
             Search
           </Button>
         </form>
 
         {/* Filters */}
-        <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <div className="space-y-3.5 pt-2 border-t border-slate-100 dark:border-slate-800">
           {/* CEFR Level pills */}
           <div className="flex items-center space-x-2 flex-wrap gap-y-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mr-1">
               CEFR Level:
             </span>
             {CEFR_LEVELS.map((lvl) => {
@@ -96,10 +96,10 @@ export default async function DictionaryPage({ searchParams }: DictionaryPagePro
                 <Link
                   key={lvl}
                   href={href}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
                     isSelected
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >
                   {lvl}
@@ -110,18 +110,17 @@ export default async function DictionaryPage({ searchParams }: DictionaryPagePro
 
           {/* Topic & Part of Speech dropdowns */}
           <div className="flex flex-wrap items-center gap-3">
-            {/* Topic Select */}
-            <div className="flex items-center space-x-2">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <div className="flex items-center space-x-2 flex-wrap gap-y-1.5">
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                 Topic:
               </span>
               <div className="flex flex-wrap gap-1.5">
                 <Link
                   href={`/dictionary?q=${encodeURIComponent(query)}&level=${level}&topic=ALL&pos=${pos}`}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium ${
+                  className={`px-2.5 py-1 rounded-md text-xs font-medium ${
                     topic === 'ALL'
                       ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >
                   All Topics
@@ -132,13 +131,13 @@ export default async function DictionaryPage({ searchParams }: DictionaryPagePro
                     <Link
                       key={t.id}
                       href={`/dictionary?q=${encodeURIComponent(query)}&level=${level}&topic=${t.slug}&pos=${pos}`}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                         isSelected
                           ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                       }`}
                     >
-                      {t.icon} {t.name}
+                      {t.name}
                     </Link>
                   );
                 })}
@@ -149,9 +148,9 @@ export default async function DictionaryPage({ searchParams }: DictionaryPagePro
       </div>
 
       {/* Results Header */}
-      <div className="flex items-center justify-between text-sm text-slate-500">
+      <div className="flex items-center justify-between text-xs text-slate-500">
         <p>
-          Found <strong>{result.total}</strong> {result.total === 1 ? 'word' : 'words'}
+          Found <strong className="text-slate-800 dark:text-slate-200">{result.total}</strong> {result.total === 1 ? 'word' : 'words'}
           {query && <span> matching &quot;{query}&quot;</span>}
         </p>
         <p>
@@ -161,16 +160,16 @@ export default async function DictionaryPage({ searchParams }: DictionaryPagePro
 
       {/* Word Cards Grid */}
       {result.words.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {result.words.map((w) => (
             <WordCard key={w.id} word={w} />
           ))}
         </div>
       ) : (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center border border-slate-200 dark:border-slate-800 space-y-3">
-          <BookOpen size={36} className="mx-auto text-slate-400" />
-          <h3 className="font-bold text-lg text-slate-900 dark:text-white">No words found</h3>
-          <p className="text-sm text-slate-500 max-w-sm mx-auto">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-10 text-center border border-slate-200/90 dark:border-slate-800 space-y-3">
+          <BookOpen size={32} className="mx-auto text-slate-400" />
+          <h3 className="font-bold text-base text-slate-900 dark:text-white">No words found</h3>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto">
             Try adjusting your search query, or clear active filters to explore more vocabulary.
           </p>
           <Link href="/dictionary">
@@ -183,7 +182,7 @@ export default async function DictionaryPage({ searchParams }: DictionaryPagePro
 
       {/* Pagination Controls */}
       {result.totalPages > 1 && (
-        <div className="flex items-center justify-center space-x-2 pt-6">
+        <div className="flex items-center justify-center space-x-2 pt-4">
           {result.page > 1 && (
             <Link
               href={`/dictionary?q=${encodeURIComponent(query)}&level=${level}&topic=${topic}&pos=${pos}&page=${result.page - 1}`}
@@ -194,7 +193,7 @@ export default async function DictionaryPage({ searchParams }: DictionaryPagePro
             </Link>
           )}
 
-          <span className="px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">
+          <span className="px-3 text-xs font-semibold text-slate-600 dark:text-slate-400">
             {result.page} / {result.totalPages}
           </span>
 

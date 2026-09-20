@@ -7,7 +7,7 @@ import { Settings, ShieldCheck, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export const metadata: Metadata = {
-  title: 'Account & Learning Settings | WordFlow',
+  title: 'Preferences & Learning Settings | WordFlow',
   description: 'Manage your WordFlow profile, target CEFR level, daily goals, translation preferences, and audio options.',
 };
 
@@ -30,47 +30,45 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50/50 dark:bg-neutral-950 py-10">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 text-xs font-semibold mb-2">
-              <Settings className="w-3.5 h-3.5" />
-              Account Settings
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-neutral-900 dark:text-white">
-              Preferences & Profile
-            </h1>
-            <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-              Customize your learning experience, interface preferences, and privacy controls.
-            </p>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-8 bg-[var(--bg-app)]">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-slate-800">
+        <div>
+          <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">
+            <Settings className="w-3.5 h-3.5" />
+            <span>Preferences</span>
           </div>
-
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs font-semibold">
-              Role: {user.role}
-            </Badge>
-            {user.role === 'ADMIN' && (
-              <Badge variant="primary" className="text-xs">
-                Admin Panel Access
-              </Badge>
-            )}
-          </div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Account & Learning Settings
+          </h1>
+          <p className="mt-1 text-xs sm:text-sm text-slate-500">
+            Configure your target CEFR level, daily vocabulary targets, audio pronunciation, and profile privacy.
+          </p>
         </div>
 
-        {/* Settings Form Client Component */}
-        <SettingsForm
-          user={{
-            name: user.name,
-            username: user.username,
-            email: user.email,
-            role: user.role,
-          }}
-          profile={user.profile}
-          settings={user.settings}
-        />
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-xs font-semibold">
+            Role: {user.role}
+          </Badge>
+          {user.role === 'ADMIN' && (
+            <span className="text-xs font-semibold px-2.5 py-1 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900">
+              Admin Access
+            </span>
+          )}
+        </div>
       </div>
+
+      {/* Settings Form Client Component */}
+      <SettingsForm
+        user={{
+          name: user.name,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+        }}
+        profile={user.profile}
+        settings={user.settings}
+      />
     </div>
   );
 }

@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import confetti from 'canvas-confetti';
 import {
   Sparkles,
   CheckCircle2,
@@ -11,7 +10,7 @@ import {
   RotateCcw,
   Trophy,
   Volume2,
-  HelpCircle,
+  Check,
   Flame,
   Award,
 } from 'lucide-react';
@@ -45,32 +44,28 @@ export function LearningSessionPlayer({ words, collectionTitle }: LearningSessio
   const [correctCount, setCorrectCount] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [startTime] = useState(Date.now());
   const [sessionSummary, setSessionSummary] = useState<{
     xpEarned: number;
     currentStreak: number;
-    unlockedAchievements: Array<{ id: string; title: string; icon: string; xpReward: number }>;
   } | null>(null);
 
-  // Generate interactive multi-step lesson questions from the words
+  // Generate interactive multi-step lesson steps from words
   useEffect(() => {
     if (!words || words.length === 0) return;
 
     const generatedSteps: QuestionStep[] = [];
-
-    // All available translations to use as distractors
     const allTranslations = words
       .map((w) => w.translations[0]?.translation)
       .filter((t): t is string => !!t);
 
     words.forEach((word) => {
-      // Step 1: Word Introduction & Pronunciation
+      // Step 1: Multi-sensory Introduction
       generatedSteps.push({
         type: 'INTRO',
         word,
       });
 
-      // Step 2: Multiple Choice Quiz
+      // Step 2: Recognition Multiple Choice Quiz
       const correctTr = word.translations[0]?.translation || word.definitionSimple;
       const otherTrs = allTranslations.filter((t) => t !== correctTr);
       const shuffledDistractors = [...otherTrs].sort(() => 0.5 - Math.random()).slice(0, 3);
@@ -83,13 +78,13 @@ export function LearningSessionPlayer({ words, collectionTitle }: LearningSessio
         correctOption: correctTr,
       });
 
-      // Step 3: Type spelling drill
+      // Step 3: Orthographic spelling drill
       generatedSteps.push({
         type: 'TYPE_SPELLING',
         word,
       });
 
-      // Step 4: Fill in the blank (if examples exist)
+      // Step 4: Cloze in-context test (if examples exist)
       if (word.examples && word.examples.length > 0) {
         const sentence = word.examples[0].sentenceEn;
         const regex = new RegExp(`\\b${word.word}\\b`, 'gi');
@@ -142,7 +137,7 @@ export function LearningSessionPlayer({ words, collectionTitle }: LearningSessio
     if (correct) setCorrectCount((prev) => prev + 1);
   };
 
-  const handleCheckBlank = (e: React.FormEvent) => {
+  const handleCheckFillBlank = (e: React.FormEvent) => {
     e.preventDefault();
     if (isAnswered || currentStep?.type !== 'FILL_BLANK') return;
     const clean = typedInput.trim().toLowerCase();
@@ -155,121 +150,50 @@ export function LearningSessionPlayer({ words, collectionTitle }: LearningSessio
 
   const finishSession = async () => {
     setIsSubmitting(true);
-    const durationSeconds = Math.max(1, Math.round((Date.now() - startTime) / 1000));
-
     try {
       const res = await fetch('/api/learn/complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          wordsCount: words.length,
-          correctCount,
-          durationSeconds,
           wordIds: words.map((w) => w.id),
-          mode: 'INTERACTIVE_LESSON',
+          correctCount,
+          totalQuestions: steps.filter((s) => s.type !== 'INTRO').length,
         }),
       });
 
       const data = await res.json();
-      if (!res.ok || !data.success) {
-        error(data.error || 'Failed to record lesson completion');
-      } else {
+      if (res.ok && data.success) {
         setSessionSummary({
-          xpEarned: data.summary.xpEarned,
-          currentStreak: data.summary.currentStreak,
-          unlockedAchievements: data.summary.unlockedAchievements || [],
+          xpEarned: data.xpEarned || 35,
+          currentStreak: data.currentStreak || 1,
         });
       }
-
       setIsCompleted(true);
-      confetti({
-        particleCount: 100,
-        spread: 80,
-        origin: { y: 0.6 },
-      });
     } catch {
-      error('Network error finalizing session');
       setIsCompleted(true);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (!currentStep) {
+  if (words.length === 0) {
     return (
-      <div className="py-16 text-center space-y-4">
-        <p className="text-sm text-slate-500">Preparing your interactive lesson...</p>
-      </div>
-    );
-  }
-
-  // Summary Screen
-  if (isCompleted) {
-    return (
-      <Card className="p-8 max-w-xl mx-auto text-center space-y-6 shadow-2xl border-emerald-200 dark:border-emerald-800 animate-in zoom-in-95 duration-200">
-        <div className="w-16 h-16 rounded-3xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center mx-auto">
-          <Trophy size={36} className="text-emerald-600 animate-bounce" />
-        </div>
-
-        <div className="space-y-1">
-          <h2 className="text-3xl font-black text-slate-900 dark:text-white">
-            Lesson Completed!
-          </h2>
-          <p className="text-sm text-slate-500">
-            {words.length} new words have been added to your Spaced Repetition queue.
-          </p>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border">
-            <span className="text-2xl font-black text-emerald-600">
-              +{sessionSummary?.xpEarned || words.length * 15}
-            </span>
-            <p className="text-[11px] font-bold text-slate-500 uppercase mt-0.5">XP Earned</p>
-          </div>
-          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border">
-            <span className="text-2xl font-black text-amber-500 flex items-center justify-center gap-1">
-              <Flame size={20} className="fill-amber-500" />
-              {sessionSummary?.currentStreak || 1}
-            </span>
-            <p className="text-[11px] font-bold text-slate-500 uppercase mt-0.5">Day Streak</p>
-          </div>
-          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border">
-            <span className="text-2xl font-black text-indigo-600">{words.length}</span>
-            <p className="text-[11px] font-bold text-slate-500 uppercase mt-0.5">Words Learned</p>
-          </div>
-        </div>
-
-        {/* Unlocked Achievements */}
-        {sessionSummary?.unlockedAchievements && sessionSummary.unlockedAchievements.length > 0 && (
-          <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 space-y-2 text-left">
-            <div className="flex items-center space-x-2 text-amber-800 dark:text-amber-300 font-bold text-xs uppercase tracking-wider">
-              <Award size={16} />
-              <span>Achievement Unlocked!</span>
-            </div>
-            {sessionSummary.unlockedAchievements.map((ach) => (
-              <div key={ach.id} className="flex items-center space-x-3 pt-1">
-                <span className="text-2xl">{ach.icon}</span>
-                <div>
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">{ach.title}</h4>
-                  <p className="text-xs text-slate-500">+{ach.xpReward} Bonus XP</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="pt-4 flex justify-center gap-3">
-          <Link href="/dashboard">
+      <Card className="p-10 text-center max-w-lg mx-auto space-y-4 border-slate-200/90 dark:border-slate-800 shadow-sm">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+          No New Words Available
+        </h2>
+        <p className="text-xs text-slate-500 leading-relaxed">
+          You have acquired all current words in this category. Visit the dictionary or collections to explore more vocabulary.
+        </p>
+        <div className="pt-2 flex justify-center gap-2.5">
+          <Link href="/collections">
             <Button variant="primary" size="md">
-              <span>Go to Dashboard</span>
-              <ArrowRight size={16} />
+              <span>Explore Collections</span>
             </Button>
           </Link>
-          <Link href="/review">
+          <Link href="/dashboard">
             <Button variant="outline" size="md">
-              Review Due Words
+              <span>Return to Dashboard</span>
             </Button>
           </Link>
         </div>
@@ -277,101 +201,175 @@ export function LearningSessionPlayer({ words, collectionTitle }: LearningSessio
     );
   }
 
-  const progressPercent = Math.round(((stepIndex + 1) / steps.length) * 100);
+  // Completed Screen
+  if (isCompleted) {
+    const quizSteps = steps.filter((s) => s.type !== 'INTRO').length;
+    const accuracy = quizSteps > 0 ? Math.round((correctCount / quizSteps) * 100) : 100;
+
+    return (
+      <Card className="max-w-2xl mx-auto p-8 border-slate-200/90 dark:border-slate-800 shadow-sm space-y-6">
+        <div className="text-center space-y-2">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto">
+            <Trophy size={24} />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+            Lesson Completed
+          </h2>
+          <p className="text-xs text-slate-500">
+            {words.length} new words initialized into your SuperMemo SM-2 spaced repetition queue.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3 text-center">
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">New Words</span>
+            <div className="text-xl font-bold text-slate-900 dark:text-white">+{words.length}</div>
+          </div>
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Quiz Score</span>
+            <div className="text-xl font-bold text-slate-900 dark:text-white">{accuracy}%</div>
+          </div>
+          <div className="p-3.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200/60 dark:border-blue-900">
+            <span className="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400 block mb-0.5">XP Earned</span>
+            <div className="text-xl font-bold text-blue-700 dark:text-blue-300">+{sessionSummary?.xpEarned || 40}</div>
+          </div>
+        </div>
+
+        {/* Word Chips */}
+        <div className="space-y-2">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+            Added to Scheduled Review Queue
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {words.map((w) => (
+              <span key={w.id} className="px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300">
+                {w.word} ({w.cefrLevel})
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="pt-4 flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
+          <Link href="/practice">
+            <Button variant="outline" size="md">
+              <span>Practice Engine</span>
+            </Button>
+          </Link>
+          <Link href="/dashboard">
+            <Button variant="primary" size="md">
+              <span>Return to Dashboard</span>
+              <ArrowRight size={14} />
+            </Button>
+          </Link>
+        </div>
+      </Card>
+    );
+  }
+
+  const progressPercent = steps.length > 0 ? Math.round(((stepIndex + 1) / steps.length) * 100) : 0;
 
   return (
-    <div className="max-w-xl mx-auto space-y-6">
-      {/* Header bar */}
-      <div className="flex items-center justify-between text-xs font-bold text-slate-500">
-        <span className="flex items-center gap-1.5">
-          <Sparkles size={14} className="text-emerald-600" />
-          <span>
-            {collectionTitle ? `${collectionTitle} • ` : ''}Step {stepIndex + 1} of {steps.length}
-          </span>
+    <div className="max-w-2xl mx-auto space-y-6">
+      {/* Top Header Bar */}
+      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <span className="font-semibold text-slate-700 dark:text-slate-300">
+          {collectionTitle ? `${collectionTitle} • ` : ''}Step {stepIndex + 1} of {steps.length}
         </span>
-        <span>{progressPercent}%</span>
+        <span className="font-mono text-[11px]">Active Lesson</span>
       </div>
-      <Progress value={progressPercent} />
 
-      {/* STEP 1: INTRO FLASHCARD */}
-      {currentStep.type === 'INTRO' && (
-        <Card className="p-6 sm:p-10 shadow-xl border-slate-200/90 dark:border-slate-800 space-y-6 animate-in fade-in duration-150">
+      <Progress value={progressPercent} className="h-1.5" />
+
+      {/* Dynamic Question Step Rendering */}
+      {currentStep?.type === 'INTRO' && (
+        <Card className="p-7 sm:p-10 border-slate-200/90 dark:border-slate-800 shadow-sm space-y-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <Badge variant="cefr" level={currentStep.word.cefrLevel} />
-              <Badge variant="default" className="text-xs uppercase font-bold">
+              <span className="text-xs uppercase font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                 {currentStep.word.partOfSpeech}
-              </Badge>
+              </span>
             </div>
             <AudioButton text={currentStep.word.word} size="md" />
           </div>
 
-          <div className="text-center space-y-2 py-4">
-            <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+          <div className="text-center space-y-2 py-2">
+            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+              01 • Word Introduction
+            </span>
+            <h2 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
               {currentStep.word.word}
             </h2>
             {currentStep.word.ipa && (
-              <p className="font-mono text-sm text-slate-500">{currentStep.word.ipa}</p>
+              <p className="font-mono text-xs text-slate-500">{currentStep.word.ipa}</p>
             )}
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border space-y-1">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Meaning</p>
-            <p className="text-base font-medium text-slate-900 dark:text-white">
-              {currentStep.word.definitionEn}
-            </p>
+          <div className="space-y-3">
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+              <span className="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">English Definition</span>
+              <p className="text-xs text-slate-800 dark:text-slate-200 leading-relaxed">
+                {currentStep.word.definitionEn}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {currentStep.word.translations.map((t, idx) => (
+                <div key={idx} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800">
+                  <span className="text-[10px] font-bold text-slate-400 block mb-0.5">
+                    {t.language === 'ru' ? '🇷🇺 Russian' : '🇺🇿 Uzbek'}
+                  </span>
+                  <span className="font-medium text-slate-900 dark:text-slate-100">{t.translation}</span>
+                </div>
+              ))}
+            </div>
+
+            {currentStep.word.examples && currentStep.word.examples.length > 0 && (
+              <p className="text-xs text-slate-600 dark:text-slate-400 italic px-1 pt-1">
+                &ldquo;{currentStep.word.examples[0].sentenceEn}&rdquo;
+              </p>
+            )}
           </div>
 
-          <div className="grid grid-cols-2 gap-2 text-xs font-semibold">
-            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 text-emerald-900 dark:text-emerald-200">
-              🇷🇺 {currentStep.word.translations.find((t) => t.language === 'ru')?.translation || '—'}
-            </div>
-            <div className="p-3 rounded-xl bg-teal-50 dark:bg-teal-950/50 border border-teal-200 text-teal-900 dark:text-teal-200">
-              🇺🇿 {currentStep.word.translations.find((t) => t.language === 'uz')?.translation || '—'}
-            </div>
-          </div>
-
-          {currentStep.word.examples && currentStep.word.examples.length > 0 && (
-            <p className="text-xs text-slate-500 italic">
-              &quot;{currentStep.word.examples[0].sentenceEn}&quot;
-            </p>
-          )}
-
-          <div className="pt-4">
-            <Button size="lg" variant="primary" onClick={handleNextStep} className="w-full font-bold">
-              <span>Got it, continue</span>
-              <ArrowRight size={16} />
+          <div className="pt-2">
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              className="w-full font-semibold text-xs"
+              onClick={handleNextStep}
+            >
+              <span>Continue to Recall Check</span>
+              <ArrowRight size={14} />
             </Button>
           </div>
         </Card>
       )}
 
-      {/* STEP 2: MULTIPLE CHOICE */}
-      {currentStep.type === 'QUIZ_TRANSLATION' && (
-        <Card className="p-6 sm:p-10 shadow-xl border-slate-200/90 dark:border-slate-800 space-y-6 animate-in fade-in duration-150">
+      {currentStep?.type === 'QUIZ_TRANSLATION' && (
+        <Card className="p-7 sm:p-10 border-slate-200/90 dark:border-slate-800 shadow-sm space-y-6">
           <div className="text-center space-y-2">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Select Correct Translation
+            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+              02 • Select Target Meaning
             </span>
-            <h2 className="text-3xl font-black text-slate-900 dark:text-white">
+            <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
               {currentStep.word.word}
             </h2>
-            <div className="flex justify-center">
-              <AudioButton text={currentStep.word.word} size="sm" />
-            </div>
+            <p className="text-xs text-slate-500">Choose the matching translation or meaning</p>
           </div>
 
-          <div className="space-y-2.5 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {currentStep.options.map((opt, i) => {
               const isSelected = selectedOption === opt;
-              const isCorrectOpt = opt === currentStep.correctOption;
+              const isOptionCorrect = opt === currentStep.correctOption;
 
-              let style = 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800';
+              let btnStyle = 'border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 text-slate-800 dark:text-slate-200 hover:bg-slate-100';
+
               if (isAnswered) {
-                if (isCorrectOpt) {
-                  style = 'border-emerald-500 bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-100 font-bold';
+                if (isOptionCorrect) {
+                  btnStyle = 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold';
                 } else if (isSelected) {
-                  style = 'border-rose-500 bg-rose-100 dark:bg-rose-950 text-rose-900 dark:text-rose-100';
+                  btnStyle = 'border-rose-500 bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300';
                 }
               }
 
@@ -381,71 +379,79 @@ export function LearningSessionPlayer({ words, collectionTitle }: LearningSessio
                   type="button"
                   disabled={isAnswered}
                   onClick={() => handleSelectQuizOption(opt)}
-                  className={`w-full p-4 rounded-2xl border-2 text-sm font-semibold text-left flex items-center justify-between transition-all cursor-pointer ${style}`}
+                  className={`p-3.5 rounded-xl border text-xs text-left transition-all cursor-pointer disabled:cursor-default flex items-center justify-between ${btnStyle}`}
                 >
                   <span>{opt}</span>
-                  {isAnswered && isCorrectOpt && <CheckCircle2 size={18} className="text-emerald-600 shrink-0" />}
-                  {isAnswered && isSelected && !isCorrectOpt && <XCircle size={18} className="text-rose-600 shrink-0" />}
+                  {isAnswered && isOptionCorrect && <Check size={14} className="text-emerald-600" />}
                 </button>
               );
             })}
           </div>
 
           {isAnswered && (
-            <div className="pt-4 animate-in fade-in">
-              <Button size="lg" variant="primary" onClick={handleNextStep} className="w-full font-bold">
+            <div className="pt-2 animate-in fade-in">
+              <Button
+                type="button"
+                variant="primary"
+                size="md"
+                className="w-full font-semibold text-xs"
+                onClick={handleNextStep}
+              >
                 <span>Continue</span>
-                <ArrowRight size={16} />
+                <ArrowRight size={14} />
               </Button>
             </div>
           )}
         </Card>
       )}
 
-      {/* STEP 3: TYPE SPELLING */}
-      {currentStep.type === 'TYPE_SPELLING' && (
-        <Card className="p-6 sm:p-10 shadow-xl border-slate-200/90 dark:border-slate-800 space-y-6 animate-in fade-in duration-150">
+      {currentStep?.type === 'TYPE_SPELLING' && (
+        <Card className="p-7 sm:p-10 border-slate-200/90 dark:border-slate-800 shadow-sm space-y-6">
           <div className="text-center space-y-2">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Spell the English Word
+            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+              03 • Spelling & Recall
             </span>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
-              {currentStep.word.translations[0]?.translation || currentStep.word.definitionSimple}
-            </h3>
-            <p className="text-xs text-slate-500">
-              Hint: starts with &quot;{currentStep.word.word[0].toUpperCase()}&quot; ({currentStep.word.word.length} letters)
-            </p>
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 max-w-md mx-auto">
+              <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">
+                {currentStep.word.translations[0]?.translation || currentStep.word.definitionSimple}
+              </p>
+            </div>
+            <p className="text-xs text-slate-500">Type the correct English spelling:</p>
           </div>
 
-          <form onSubmit={handleCheckSpelling} className="space-y-4 pt-2">
+          <form onSubmit={handleCheckSpelling} className="space-y-4 max-w-md mx-auto">
             <input
               type="text"
               autoFocus
               disabled={isAnswered}
               value={typedInput}
               onChange={(e) => setTypedInput(e.target.value)}
-              placeholder="Type English word..."
-              className="w-full px-4 py-3.5 text-center text-lg font-bold rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:border-emerald-500"
+              placeholder="Type in English..."
+              className="w-full text-center text-xl font-bold py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
 
             {!isAnswered ? (
-              <Button type="submit" size="lg" variant="primary" className="w-full font-bold">
-                Check Spelling
+              <Button type="submit" variant="primary" size="md" className="w-full font-semibold text-xs">
+                <span>Verify Spelling</span>
               </Button>
             ) : (
-              <div className="space-y-4 animate-in fade-in">
-                <div
-                  className={`p-3 rounded-xl border text-sm text-center font-bold ${
-                    isCorrect
-                      ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
-                      : 'border-rose-300 bg-rose-50 text-rose-800'
-                  }`}
-                >
-                  {isCorrect ? 'Correct spelling!' : `Correct answer: "${currentStep.word.word}"`}
+              <div className="space-y-3 animate-in fade-in">
+                <div className={`p-3 rounded-xl text-xs font-semibold text-center ${
+                  isCorrect
+                    ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200'
+                    : 'bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200'
+                }`}>
+                  {isCorrect ? 'Correct spelling!' : `Target: ${currentStep.word.word}`}
                 </div>
-                <Button type="button" size="lg" variant="primary" onClick={handleNextStep} className="w-full font-bold">
-                  <span>Continue</span>
-                  <ArrowRight size={16} />
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="md"
+                  className="w-full font-semibold text-xs"
+                  onClick={handleNextStep}
+                >
+                  <span>Next Step</span>
+                  <ArrowRight size={14} />
                 </Button>
               </div>
             )}
@@ -453,47 +459,52 @@ export function LearningSessionPlayer({ words, collectionTitle }: LearningSessio
         </Card>
       )}
 
-      {/* STEP 4: FILL IN THE BLANK */}
-      {currentStep.type === 'FILL_BLANK' && (
-        <Card className="p-6 sm:p-10 shadow-xl border-slate-200/90 dark:border-slate-800 space-y-6 animate-in fade-in duration-150">
+      {currentStep?.type === 'FILL_BLANK' && (
+        <Card className="p-7 sm:p-10 border-slate-200/90 dark:border-slate-800 shadow-sm space-y-6">
           <div className="text-center space-y-2">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Fill in the Blank
+            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+              04 • Cloze Context
             </span>
-            <p className="text-lg font-semibold text-slate-900 dark:text-white leading-relaxed">
-              &quot;{currentStep.sentenceWithBlank}&quot;
-            </p>
+            <p className="text-xs text-slate-500">Restore the missing word in this sentence:</p>
           </div>
 
-          <form onSubmit={handleCheckBlank} className="space-y-4 pt-2">
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-center text-sm font-medium text-slate-800 dark:text-slate-200 max-w-md mx-auto leading-relaxed">
+            &ldquo;{currentStep.sentenceWithBlank}&rdquo;
+          </div>
+
+          <form onSubmit={handleCheckFillBlank} className="space-y-4 max-w-md mx-auto">
             <input
               type="text"
               autoFocus
               disabled={isAnswered}
               value={typedInput}
               onChange={(e) => setTypedInput(e.target.value)}
-              placeholder="Missing word..."
-              className="w-full px-4 py-3.5 text-center text-lg font-bold rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:border-emerald-500"
+              placeholder="Enter missing word..."
+              className="w-full text-center text-lg font-bold py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
 
             {!isAnswered ? (
-              <Button type="submit" size="lg" variant="primary" className="w-full font-bold">
-                Check Answer
+              <Button type="submit" variant="primary" size="md" className="w-full font-semibold text-xs">
+                <span>Check Answer</span>
               </Button>
             ) : (
-              <div className="space-y-4 animate-in fade-in">
-                <div
-                  className={`p-3 rounded-xl border text-sm text-center font-bold ${
-                    isCorrect
-                      ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
-                      : 'border-rose-300 bg-rose-50 text-rose-800'
-                  }`}
-                >
-                  {isCorrect ? 'Well done!' : `Target word: "${currentStep.word.word}"`}
+              <div className="space-y-3 animate-in fade-in">
+                <div className={`p-3 rounded-xl text-xs font-semibold text-center ${
+                  isCorrect
+                    ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200'
+                    : 'bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200'
+                }`}>
+                  {isCorrect ? 'Accurate context recall!' : `Missing word: ${currentStep.word.word}`}
                 </div>
-                <Button type="button" size="lg" variant="primary" onClick={handleNextStep} className="w-full font-bold">
-                  <span>Continue</span>
-                  <ArrowRight size={16} />
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="md"
+                  className="w-full font-semibold text-xs"
+                  onClick={handleNextStep}
+                >
+                  <span>Finish Step</span>
+                  <ArrowRight size={14} />
                 </Button>
               </div>
             )}

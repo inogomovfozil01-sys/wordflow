@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { UserPlus, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -40,8 +40,8 @@ export default function RegisterPage() {
         return;
       }
 
-      toastSuccess('Account created! Let’s personalize your learning path.');
-      router.push('/onboarding');
+      toastSuccess('Account created successfully');
+      router.push('/dashboard');
       router.refresh();
     } catch {
       setError('A network error occurred during registration. Please try again.');
@@ -51,92 +51,122 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
-      <div className="max-w-md w-full space-y-6">
-        <div className="text-center space-y-2">
-          <Link href="/" className="inline-flex items-center space-x-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white font-bold text-xl shadow-md">
-              W
+    <div className="min-h-[88vh] grid grid-cols-1 lg:grid-cols-12 bg-[var(--bg-app)]">
+      {/* Left Column: Product Philosophy & Mission (Desktop only) */}
+      <div className="hidden lg:flex lg:col-span-5 bg-slate-900 text-white p-12 flex-col justify-between border-r border-slate-800">
+        <div className="space-y-6">
+          <Link href="/" className="inline-flex items-center space-x-2.5">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
+              WF
             </div>
-            <span className="font-extrabold text-2xl tracking-tight text-slate-900 dark:text-white">
-              Word<span className="text-emerald-600 dark:text-emerald-400">Flow</span>
+            <span className="font-bold text-lg tracking-tight text-white">
+              Word<span className="text-blue-400">Flow</span>
             </span>
           </Link>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Create your account
-          </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Join thousands of learners mastering real-world English words.
-          </p>
+
+          <div className="pt-10 space-y-4">
+            <span className="text-xs font-mono uppercase tracking-wider text-blue-400">
+              Personalized Lexical Growth
+            </span>
+            <h1 className="text-3xl font-bold tracking-tight leading-snug">
+              Begin your structured path from A1 to C2 mastery.
+            </h1>
+            <p className="text-sm text-slate-400 leading-relaxed">
+              Create a free account to track your spaced repetition intervals, practice listening and spelling, and train with your personal AI language mentor.
+            </p>
+          </div>
         </div>
 
-        <Card className="p-6 sm:p-8 space-y-6 shadow-xl border-slate-200/90 dark:border-slate-800">
-          {error && (
-            <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-xs text-rose-800 dark:text-rose-300 font-medium">
-              {error}
-            </div>
-          )}
+        <div className="space-y-4 pt-12 border-t border-slate-800 text-xs text-slate-400">
+          <div className="flex items-center space-x-2">
+            <CheckCircle2 size={16} className="text-blue-400" />
+            <span>Database-backed persistence on Neon PostgreSQL</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <CheckCircle2 size={16} className="text-blue-400" />
+            <span>Oxford 3000 & IELTS academic collections</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <CheckCircle2 size={16} className="text-blue-400" />
+            <span>Natural audio pronunciation engine</span>
+          </div>
+        </div>
+      </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              label="Full Name"
-              placeholder="Alex Rivera"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
+      {/* Right Column: Register Form */}
+      <div className="lg:col-span-7 flex items-center justify-center p-6 sm:p-12">
+        <div className="max-w-md w-full space-y-6">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Create your account
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Start expanding your active vocabulary today.
+            </p>
+          </div>
 
-            <Input
-              label="Username"
-              placeholder="alex_learner"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
+          <Card className="p-6 sm:p-7 space-y-5 border-slate-200/90 dark:border-slate-800 shadow-sm">
+            {error && (
+              <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-xs text-rose-700 dark:text-rose-300">
+                {error}
+              </div>
+            )}
 
-            <Input
-              label="Email Address"
-              type="email"
-              placeholder="alex@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            <form onSubmit={handleSubmit} className="space-y-3.5">
+              <Input
+                label="Full Name"
+                placeholder="Alex Rivera"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
 
-            <Input
-              label="Password (min 6 characters)"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+              <Input
+                label="Username"
+                placeholder="alex_learner"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
 
-            <div className="pt-2">
+              <Input
+                label="Email Address"
+                type="email"
+                placeholder="alex@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+
+              <Input
+                label="Password"
+                type="password"
+                placeholder="Minimum 6 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+
               <Button
                 type="submit"
                 variant="primary"
-                size="lg"
-                className="w-full font-bold"
+                size="md"
+                className="w-full font-semibold text-xs mt-2"
                 isLoading={isLoading}
               >
-                <UserPlus size={18} />
-                <span>Create Free Account</span>
+                <span>Create Account</span>
+                <ArrowRight size={14} />
               </Button>
-            </div>
-          </form>
+            </form>
+          </Card>
 
-          <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1 text-center">
-            <p>By signing up, you agree to our Terms of Service and Privacy Policy.</p>
-          </div>
-        </Card>
-
-        <p className="text-center text-sm text-slate-600 dark:text-slate-400">
-          Already have an account?{' '}
-          <Link href="/login" className="font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
-            Sign in
-          </Link>
-        </p>
+          <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+            Already registered?{' '}
+            <Link href="/login" className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+              Sign in to account
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

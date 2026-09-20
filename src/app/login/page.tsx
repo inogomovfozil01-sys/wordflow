@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LogIn, Sparkles, ArrowRight } from 'lucide-react';
+import { LogIn, ArrowRight, CheckCircle2, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -38,7 +38,7 @@ export default function LoginPage() {
         return;
       }
 
-      toastSuccess('Welcome back to WordFlow!');
+      toastSuccess('Welcome back to WordFlow');
       router.push('/dashboard');
       router.refresh();
     } catch {
@@ -55,92 +55,128 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
-      <div className="max-w-md w-full space-y-6">
-        <div className="text-center space-y-2">
-          <Link href="/" className="inline-flex items-center space-x-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white font-bold text-xl shadow-md">
-              W
+    <div className="min-h-[88vh] grid grid-cols-1 lg:grid-cols-12 bg-[var(--bg-app)]">
+      {/* Left Column: Product Philosophy & Mission (Desktop only) */}
+      <div className="hidden lg:flex lg:col-span-5 bg-slate-900 text-white p-12 flex-col justify-between border-r border-slate-800">
+        <div className="space-y-6">
+          <Link href="/" className="inline-flex items-center space-x-2.5">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
+              WF
             </div>
-            <span className="font-extrabold text-2xl tracking-tight text-slate-900 dark:text-white">
-              Word<span className="text-emerald-600 dark:text-emerald-400">Flow</span>
+            <span className="font-bold text-lg tracking-tight text-white">
+              Word<span className="text-blue-400">Flow</span>
             </span>
           </Link>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Welcome back
-          </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Sign in to continue your daily English vocabulary streak.
-          </p>
+
+          <div className="pt-10 space-y-4">
+            <span className="text-xs font-mono uppercase tracking-wider text-blue-400">
+              Cognitive Vocabulary Mastery
+            </span>
+            <h1 className="text-3xl font-bold tracking-tight leading-snug">
+              Consistent daily practice turns words into automatic recall.
+            </h1>
+            <p className="text-sm text-slate-400 leading-relaxed">
+              Log in to review words scheduled for your personalized SuperMemo SM-2 interval today. Keep your memory consolidation uninterrupted.
+            </p>
+          </div>
         </div>
 
-        <Card className="p-6 sm:p-8 space-y-6 shadow-xl border-slate-200/90 dark:border-slate-800">
-          {error && (
-            <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-xs text-rose-800 dark:text-rose-300 font-medium">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              label="Email or Username"
-              placeholder="alex@example.com or alex_learner"
-              value={emailOrUsername}
-              onChange={(e) => setEmailOrUsername(e.target.value)}
-              required
-            />
-
-            <Input
-              label="Password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              className="w-full font-bold"
-              isLoading={isLoading}
-            >
-              <LogIn size={18} />
-              <span>Sign In</span>
-            </Button>
-          </form>
-
-          {/* Quick Demo Fillers */}
-          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">
-              One-Click Demo Accounts
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleFillDemo('alex_learner', 'Demo@WordFlow2026!')}
-                className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-center cursor-pointer"
-              >
-                👤 <strong>Demo Student</strong>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleFillDemo('admin', 'Admin@WordFlow2026!')}
-                className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-center cursor-pointer"
-              >
-                👑 <strong>Admin Account</strong>
-              </button>
-            </div>
+        <div className="space-y-4 pt-12 border-t border-slate-800 text-xs text-slate-400">
+          <div className="flex items-center space-x-2">
+            <CheckCircle2 size={16} className="text-blue-400" />
+            <span>Spaced repetition algorithm (SM-2)</span>
           </div>
-        </Card>
+          <div className="flex items-center space-x-2">
+            <CheckCircle2 size={16} className="text-blue-400" />
+            <span>Gemini 3.8 Flash AI language tutor</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <CheckCircle2 size={16} className="text-blue-400" />
+            <span>Bilingual Russian & Uzbek translations</span>
+          </div>
+        </div>
+      </div>
 
-        <p className="text-center text-sm text-slate-600 dark:text-slate-400">
-          Don&apos;t have an account?{' '}
-          <Link href="/register" className="font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
-            Create account free
-          </Link>
-        </p>
+      {/* Right Column: Sign In Form */}
+      <div className="lg:col-span-7 flex items-center justify-center p-6 sm:p-12">
+        <div className="max-w-md w-full space-y-6">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Sign in to your account
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Enter your credentials to access your personal study plan.
+            </p>
+          </div>
+
+          <Card className="p-6 sm:p-7 space-y-5 border-slate-200/90 dark:border-slate-800 shadow-sm">
+            {error && (
+              <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-xs text-rose-700 dark:text-rose-300">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Input
+                label="Email or Username"
+                placeholder="demo@wordflow.app or username"
+                value={emailOrUsername}
+                onChange={(e) => setEmailOrUsername(e.target.value)}
+                required
+              />
+
+              <Input
+                label="Password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+
+              <Button
+                type="submit"
+                variant="primary"
+                size="md"
+                className="w-full font-semibold text-xs"
+                isLoading={isLoading}
+              >
+                <span>Sign In</span>
+                <ArrowRight size={14} />
+              </Button>
+            </form>
+
+            {/* Quick Demo Fill Buttons */}
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
+              <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider text-center">
+                Instant Evaluation Accounts
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleFillDemo('demo@wordflow.app', 'Demo@WordFlow2026!')}
+                  className="py-2 px-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-semibold transition-colors cursor-pointer text-center"
+                >
+                  Fill Demo User
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleFillDemo('admin@wordflow.app', 'Admin@WordFlow2026!')}
+                  className="py-2 px-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-semibold transition-colors cursor-pointer text-center"
+                >
+                  Fill Admin User
+                </button>
+              </div>
+            </div>
+          </Card>
+
+          <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+            Don&apos;t have an account yet?{' '}
+            <Link href="/register" className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+              Create an account
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
