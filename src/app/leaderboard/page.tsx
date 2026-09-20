@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   description: 'See the top English vocabulary learners on WordFlow. Earn XP through daily reviews, multi-mode practice, and masteries.',
 };
 
+export const dynamic = 'force-dynamic';
+
 export default async function LeaderboardPage() {
   const session = await getCurrentSession();
   const leaderboard = await getLeaderboard();

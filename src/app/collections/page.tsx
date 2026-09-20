@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CreateCollectionModalButton } from '@/components/create-collection-modal-button';
 
+export const dynamic = 'force-dynamic';
+
 export default async function CollectionsPage() {
   const session = await getCurrentSession();
   const collections = await getCollections(session?.userId);

@@ -21,6 +21,8 @@ interface DictionaryPageProps {
 const CEFR_LEVELS = ['ALL', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 const POS_LIST = ['ALL', 'noun', 'verb', 'adjective', 'adverb'];
 
+export const dynamic = 'force-dynamic';
+
 export default async function DictionaryPage({ searchParams }: DictionaryPageProps) {
   const resolvedParams = await searchParams;
   const session = await getCurrentSession();
