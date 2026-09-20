@@ -1,0 +1,423 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum CefrLevel {
+  A1
+  A2
+  B1
+  B2
+  C1
+  C2
+}
+
+enum WordStatus {
+  NEW
+  LEARNING
+  REVIEW
+  MASTERED
+}
+
+enum RelationType {
+  SYNONYM
+  ANTONYM
+  FORM
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum NotificationType {
+  REVIEW_DUE
+  STREAK_REMINDER
+  ACHIEVEMENT
+  FRIEND_REQUEST
+  SYSTEM
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  username      String    @unique
+  email         String    @unique
+  passwordHash  String
+  role          Role      @default(USER)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  profile       UserProfile?
+  settings      UserSettings?
+  userWords     UserWord[]
+  reviews       Review[]
+  sessions      LearningSession[]
+  achievements  UserAchievement[]
+  notifications Notification[]
+  dailyActivity DailyActivity[]
+  collections   Collection[]      @relation("CreatedCollections")
+  aiUsages      AIUsage[]
+  auditLogs     AdminAuditLog[]   @relation("AdminLogs")
+
+  sentFriendRequests     Friendship[] @relation("SentFriendRequests")
+  receivedFriendRequests Friendship[] @relation("ReceivedFriendRequests")
+
+  @@index([email])
+  @@index([username])
+  @@index([role])
+}
+
+model UserProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  bio              String?
+  avatar           String?
+  isPublic         Boolean  @default(true)
+  showStreak       Boolean  @default(true)
+  showWordsLearned Boolean  @default(true)
+  showOnLeaderboard Boolean @default(true)
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserSettings {
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  cefrLevel            CefrLevel @default(A1)
+  learningGoal         String    @default("Everyday English")
+  dailyTargetWords     Int       @default(10)
+  interfaceLang        String    @default("en") // en, ru, uz
+  soundEnabled         Boolean   @default(true)
+  autoPronounce        Boolean   @default(true)
+  theme                String    @default("system") // system, light, dark
+  notificationsEnabled Boolean   @default(true)
+
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Word {
+  id               String            @id @default(cuid())
+  word             String            @unique
+  normalizedWord   String            @unique
+  partOfSpeech     String            // noun, verb, adjective, etc.
+  cefrLevel        CefrLevel         @default(A1)
+  ipa              String?
+  audioUrl         String?
+  definitionEn     String
+  definitionSimple String
+  frequency        Int?              @default(1)
+  difficulty       Float             @default(1.0)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  translations     WordTranslation[]
+  examples         WordExample[]
+  relations        WordRelation[]
+  topics           WordTopic[]
+  collectionWords  CollectionWord[]
+  userWords        UserWord[]
+  reviews          Review[]
+  answers          LearningAnswer[]
+
+  @@index([word])
+  @@index([normalizedWord])
+  @@index([cefrLevel])
+  @@index([partOfSpeech])
+}
+
+model WordTranslation {
+  id          String   @id @default(cuid())
+  wordId      String
+  language    String   // ru, uz
+  translation String
+  explanation String?
+
+  word        Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@unique([wordId, language])
+  @@index([wordId])
+  @@index([language])
+}
+
+model WordExample {
+  id          String   @id @default(cuid())
+  wordId      String
+  sentenceEn  String
+  sentenceRu  String?
+  sentenceUz  String?
+
+  word        Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@index([wordId])
+}
+
+model WordRelation {
+  id          String       @id @default(cuid())
+  wordId      String
+  type        RelationType
+  relatedWord String
+
+  word        Word         @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@index([wordId])
+  @@index([type])
+}
+
+model Topic {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  slug        String      @unique
+  icon        String?
+  description String?
+
+  words       WordTopic[]
+
+  @@index([slug])
+}
+
+model WordTopic {
+  id      String @id @default(cuid())
+  wordId  String
+  topicId String
+
+  word    Word   @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  topic   Topic  @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([wordId, topicId])
+  @@index([wordId])
+  @@index([topicId])
+}
+
+model Collection {
+  id          String           @id @default(cuid())
+  name        String
+  slug        String           @unique
+  description String?
+  isOfficial  Boolean          @default(false)
+  creatorId   String?
+  isPublic    Boolean          @default(true)
+  icon        String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  creator     User?            @relation("CreatedCollections", fields: [creatorId], references: [id], onDelete: SetNull)
+  words       CollectionWord[]
+
+  @@index([slug])
+  @@index([creatorId])
+  @@index([isOfficial])
+}
+
+model CollectionWord {
+  id           String     @id @default(cuid())
+  collectionId String
+  wordId       String
+  order        Int        @default(0)
+
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  word         Word       @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, wordId])
+  @@index([collectionId])
+  @@index([wordId])
+}
+
+model UserWord {
+  id             String     @id @default(cuid())
+  userId         String
+  wordId         String
+  status         WordStatus @default(NEW)
+  interval       Int        @default(0)     // Days
+  repetition     Int        @default(0)     // Consecutive successful reviews
+  easeFactor     Float      @default(2.5)   // SM-2 Ease Factor (min 1.3)
+  lapses         Int        @default(0)     // Number of times forgotten
+  lastReviewed   DateTime?
+  nextReview     DateTime   @default(now()) // Scheduled review date
+  correctCount   Int        @default(0)
+  incorrectCount Int        @default(0)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  word           Word       @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, wordId])
+  @@index([userId])
+  @@index([wordId])
+  @@index([userId, status])
+  @@index([userId, nextReview])
+}
+
+model Review {
+  id               String   @id @default(cuid())
+  userId           String
+  wordId           String
+  rating           Int      // 1=Again, 2=Hard, 3=Good, 4=Easy
+  intervalBefore   Int
+  intervalAfter    Int
+  easeFactorBefore Float
+  easeFactorAfter  Float
+  timeSpentMs      Int      @default(0)
+  reviewedAt       DateTime @default(now())
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  word             Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([wordId])
+  @@index([reviewedAt])
+}
+
+model LearningSession {
+  id              String           @id @default(cuid())
+  userId          String
+  sessionType     String           // LESSON, REVIEW, PRACTICE
+  mode            String           // FLASHCARD, QUIZ, SPEED, MATCH, etc.
+  wordsCount      Int              @default(0)
+  correctCount    Int              @default(0)
+  xpEarned        Int              @default(0)
+  durationSeconds Int              @default(0)
+  completedAt     DateTime         @default(now())
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers         LearningAnswer[]
+
+  @@index([userId])
+  @@index([completedAt])
+}
+
+model LearningAnswer {
+  id           String          @id @default(cuid())
+  sessionId    String
+  wordId       String
+  questionType String
+  isCorrect    Boolean
+  userAnswer   String?
+  timeSpentMs  Int             @default(0)
+
+  session      LearningSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  word         Word            @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([wordId])
+}
+
+model Achievement {
+  id            String            @id @default(cuid())
+  code          String            @unique // e.g. FIRST_WORD, STREAK_7
+  title         String
+  description   String
+  icon          String
+  category      String            // WORDS, STREAK, MASTERY, SOCIAL
+  xpReward      Int               @default(50)
+  conditionType String            // words_learned, streak_days, reviews_completed
+  threshold     Int
+
+  users         UserAchievement[]
+
+  @@index([code])
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime    @default(now())
+
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+}
+
+model Friendship {
+  id          String           @id @default(cuid())
+  requesterId String
+  addresseeId String
+  status      FriendshipStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  requester   User             @relation("SentFriendRequests", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee   User             @relation("ReceivedFriendRequests", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, addresseeId])
+  @@index([requesterId])
+  @@index([addresseeId])
+  @@index([status])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+
+model DailyActivity {
+  id               String   @id @default(cuid())
+  userId           String
+  date             String   // Format: YYYY-MM-DD
+  wordsStudied     Int      @default(0)
+  wordsReviewed    Int      @default(0)
+  timeSpentSeconds Int      @default(0)
+  xpEarned         Int      @default(0)
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+}
+
+model AIUsage {
+  id               String   @id @default(cuid())
+  userId           String
+  endpoint         String   // tutor, explain, quiz
+  promptTokens     Int      @default(0)
+  completionTokens Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model AdminAuditLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  action     String
+  targetType String
+  targetId   String?
+  details    String?
+  createdAt  DateTime @default(now())
+
+  admin      User     @relation("AdminLogs", fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([createdAt])
+}
